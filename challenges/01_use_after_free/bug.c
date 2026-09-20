@@ -42,11 +42,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct Widget Widget;
+
+typedef struct Widget Widget; // 구조체 정의
 
 typedef struct {
-    void (*render)(Widget *self);
-    void (*on_event)(Widget *self, int code);
+    void (*render)(Widget *self); // 함수를 가리키는 포인터 함수 호출은 X
+    void (*on_event)(Widget *self, int code); 
 } VTable;
 
 struct Widget {
@@ -120,7 +121,7 @@ static void screen_dispatch(Screen *s, int code) {
 static void screen_render(Screen *s) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
-        w->vtbl->render(w);      
+        w->vtbl->render(w);  // 문제의 코드 free()로 참조함
     }
 }
 
@@ -163,7 +164,7 @@ int main(void) {
     printf("%s\n", status);
 
     printf("frame 2:\n");
-    screen_render(&s);           
+    screen_render(&s); // 문제의 코드
 
     free(status);
     for (int i = 0; i < s.count; i++) free(s.items[i]);
