@@ -124,6 +124,9 @@ static void screen_add(Screen *s, Widget *w) {
 static void screen_dispatch(Screen *s, int code) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
+        if(s->items[i]==NULL){ // 스크린 items배열에서 NULL값이 있으면 건너뜀
+            continue;
+        }
         w->vtbl->on_event(w, code);
     }
 }
@@ -132,6 +135,13 @@ static void screen_dispatch(Screen *s, int code) {
 static void screen_render(Screen *s) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
+        if(w!=NULL && w->closed==1){ // items[i]의 위젯이가 NULL이 아니고 closed = 1이라면
+            s->items[i] = NULL; // 지정해제해주기
+            free(w);
+        }
+        if(s->items[i]==NULL){ // NULL 이면 무시하고 건너뜀
+            continue;
+        }
         w->vtbl->render(w);  // 문제의 코드 free()로 참조함
     }
 }
@@ -139,7 +149,7 @@ static void screen_render(Screen *s) {
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
         self->closed = 1;
-        widget_destroy(self);
+        // widget_destroy(self); event에서는 free하지 않음 screen 쪽에서 closed=1인 위젯을 free하고 그 슬롯을 null로 바꿈
     }
 }
 
