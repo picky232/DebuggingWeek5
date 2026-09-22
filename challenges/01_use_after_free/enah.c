@@ -42,51 +42,48 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-typedef struct Widget Widget; // 구조체 정의
+typedef struct Widget Widget;
 
 typedef struct {
-    void (*render)(Widget *self); // 함수를 가리키는 포인터 함수 호출은 X 호출시에는 render(포인터 변수)
-    void (*on_event)(Widget *self, int code); // 이벤트 발생시 실행 함수를 가리켜주는 포인터
-} VTable; 
+    void (*render)(Widget *self);
+    void (*on_event)(Widget *self, int code);
+} VTable;
 
 struct Widget {
-    const VTable *vtbl; // Vtable 포인터
-    int id; // 위젯 아이디
-    int closed; // 위젯 상태 1이면 closed
-    char label[24]; // 레이블 (출력되는 말)
+    const VTable *vtbl; 
+    int id;
+    int closed;
+    char label[24];
 };
 
-#define MAX_WIDGETS 8 // 최대 위젯
+#define MAX_WIDGETS 8
 typedef struct {
-    Widget *items[MAX_WIDGETS]; // 위젯 리스트 (최대 8개)
-    int count; // ?
+    Widget *items[MAX_WIDGETS];
+    int count;
 } Screen;
 
 /* ── 위젯 종류별 동작 ─────────────────────────────────────────── */
-static void button_render(Widget *self) { // 버튼 이벤트, id, 명령
+static void button_render(Widget *self) {
     printf("  [Button #%d] \"%s\"\n", self->id, self->label);
 }
-static void label_render(Widget *self) { // 안내말 출력됨, id, label
+static void label_render(Widget *self) {
     printf("  Label #%d: %s\n", self->id, self->label);
 }
-static void dialog_render(Widget *self) { // 한번더 물어봄, id, label
+static void dialog_render(Widget *self) {
     printf("  <<Dialog #%d>> %s\n", self->id, self->label);
 }
 
-static void widget_noop_event(Widget *self, int code) { (void)self; (void)code; } // 그냥 아무것도 안하는 코드
+static void widget_noop_event(Widget *self, int code) { (void)self; (void)code; }    
 
 /* 다이얼로그는 이벤트 코드 1(닫기)을 받으면 스스로 정리(파괴)된다 */
 static void dialog_on_event(Widget *self, int code);
 
-// 각 위젯 종류가 어떤 함수를 사용할지 정해놓은 Vtable 객체를 만드는 코드
-// Button, Label은 이벤트가 아무것도 안함.
-static const VTable BUTTON_VT = { button_render, widget_noop_event }; 
+static const VTable BUTTON_VT = { button_render, widget_noop_event };
 static const VTable LABEL_VT  = { label_render,  widget_noop_event };
-// Dialog는 이벤트가 존재함. 이벤트가 1이면 closed함
 static const VTable DIALOG_VT = { dialog_render, dialog_on_event  };
 
 static Widget *widget_new(const VTable *vt, int id, const char *label) {
+
     /* [Thinking Point]
     *   w 에 아직 아무 값도 넣지 않았는데, sizeof *w 로 *w 를 써도 괜찮은 이유는?
     *   tip 1. sizeof 는 피연산자를 '실행(역참조)'하지 않고 '타입'만 본다.
@@ -94,7 +91,7 @@ static Widget *widget_new(const VTable *vt, int id, const char *label) {
     *   tip 2. 그래서 sizeof *w 는 (VLA 제외) 컴파일 타임에 sizeof(Widget) 상수로 치환된다.
     *   생각해보기: sizeof(Widget) 대신 sizeof *w 로 쓰면 어떤 장점이 있을까?
     */
-    Widget *w = malloc(sizeof *w); // malloc 할당 malloc(sizeof *w)랑 malloc(Widget)이랑 같은 뜻 *w가 Widget타입이란걸 컴파일러가 이미 알고있음.
+    Widget *w = malloc(sizeof *w);
     if (!w) { perror("malloc"); exit(1); }
     w->vtbl = vt;
     w->id = id;
@@ -104,56 +101,50 @@ static Widget *widget_new(const VTable *vt, int id, const char *label) {
     return w;
 }
 
-static void widget_destroy(Widget *w) { // 위젯을 free해주는 함수
-    // w = NULL; // NULL로 초기화 -> 잘못된 방법인 이유
-    /*
-        Widget을 아예 해제하지 않는 코드가 됨. C의 함수 인자는 값 복사(call by value)임.
-        w가 NULL이 됬음으로 free(NULL)을 하게됨 때문에 메모리를 해제되지 않음. 
-        때문에 댕글링 포인터였던 w(dialog가 있는 items[2])가 정상적으로 접근이 가능해서 정상적인 프로그램처럼 보인것임.
-    */
-    free(w);
+static void widget_destroy(Widget *w) {
+    free(w);          
 }
 
 /* ── Screen ──────────────────────────────────────────────────── */
-// 스크린안 items 배열안에 위젯 앞에서부터 채워줌.
 static void screen_add(Screen *s, Widget *w) {
     if (s->count < MAX_WIDGETS) s->items[s->count++] = w;
 }
 
-// 이벤트 넣어줌 다른 위젯은 이벤트에 1넣어줘도 동작 X dialog만 free해주는 이벤트임 - 단 문제에서는 free는 되어있지만 다른곳에서 사용하려해서 세그먼트 폴트 발생함
 static void screen_dispatch(Screen *s, int code) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
+        if (w == NULL)              //수정
+            continue;               //수정      
         w->vtbl->on_event(w, code);
     }
 }
 
-// 렌더링 하는 코드
-static void screen_render(Screen *s) {
-    for (int i = 0; i < s->count; i++) {
+static void screen_render(Screen *s) {  
+    for (int i = 0; i < s->count; i++) {    
         Widget *w = s->items[i];
-        w->vtbl->render(w);  // 문제의 코드 free()로 참조함
+        if (w == NULL)              //수정
+            continue;               //수정
+        w->vtbl->render(w);      
     }
 }
 
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
-        self->closed = 1;
-        widget_destroy(self);
+        self->closed = 1;   
     }
 }
 
 static char *app_build_status(const char *text) {
-    char *msg = malloc(sizeof(Widget)); // 위젯크기만큼 메모리할당 이유 : dialog도 위젯이기때문에 방금 해제된 공간이 다시 재사용될 가능성이 높음
-    if (!msg) exit(1); // 말록 실패시 오류상태 1로 종료
+    char *msg = malloc(sizeof(Widget));   
+    if (!msg) exit(1);
 
-    /* [테스트용 연출] 재사용한 메모리를 0xAB 로 '일부러' 덮어써서 오염시킨다.
-     * 실무라면 다른 기능이 우연히 이 자리를 덮어쓰겠지만, 여기서는 UAF 크래시를
-     * 매번 똑같이(결정적으로) 재현하기 위해 인위적으로 채운다. 
-     * glibc(리눅스) 환경 (tcache)에서만 유효하다. 환경&상황에 따라 msg는 새로운 주소로 할당될 수 있다.
-     */
-    memset(msg, 0xAB, sizeof(Widget)); // memset() 메모리를 특정 바이트값으로 채우는 함수 memset(시작주소, 채울바이트값, 몇바이트)
-    snprintf(msg, sizeof(Widget), "STATUS: %s", text); // 0xAB로 덮어씌운 msg에서 text문자열 길이만큼 다시 덮어서씀 그리고 문자열주소를 반환함.
+    //  [테스트용 연출] 재사용한 메모리를 0xAB 로 '일부러' 덮어써서 오염시킨다.
+    //   실무라면 다른 기능이 우연히 이 자리를 덮어쓰겠지만, 여기서는 UAF 크래시를
+    //   매번 똑같이(결정적으로) 재현하기 위해 인위적으로 채운다. 
+    //  glibc(리눅스) 환경 (tcache)에서만 유효하다. 환경&상황에 따라 msg는 새로운 주소로 할당될 수 있다.
+    
+    memset(msg, 0xAB, sizeof(Widget));
+    snprintf(msg, sizeof(Widget), "STATUS: %s", text);
     return msg;
 }
 
@@ -170,12 +161,19 @@ int main(void) {
     screen_dispatch(&s, 1);
 
     /* TODO 닫힌(closed) 위젯을 여기서 정리(free + 해당 슬롯 NULL)할 필요가 있음 */
+    for (int i = 0; i < s.count; i++) {
+        if (s.items[i] != NULL && s.items[i]->closed) {
+            free(s.items[i]);
+            s.items[i] = NULL;
+        }
+    }
+    //수정
 
-    char *status = app_build_status("dialog closed"); // 다이얼로그 
+    char *status = app_build_status("dialog closed");
     printf("%s\n", status);
 
     printf("frame 2:\n");
-    screen_render(&s); // 문제의 코드
+    screen_render(&s);           
 
     free(status);
     for (int i = 0; i < s.count; i++) free(s.items[i]);

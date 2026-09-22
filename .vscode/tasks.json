@@ -1,36 +1,79 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "build-all",
-      "type": "shell",
-      "command": "make all",
-      "problemMatcher": ["$gcc"],
-      "group": "build"
-    },
-    {
-      "label": "build-one",
-      "type": "shell",
-      "command": "gcc -std=c11 -g -O0 -fno-omit-frame-pointer challenges/${input:challenge}/bug.c -o build/${input:challenge}",
-      "problemMatcher": ["$gcc"],
-      "group": { "kind": "build", "isDefault": true }
-    }
-  ],
-  "inputs": [
-    {
-      "id": "challenge",
-      "type": "pickString",
-      "description": "디버깅할 챌린지 선택",
-      "options": [
-        "01_use_after_free", "02_stack_buffer_overflow", "03_heap_buffer_overflow",
-        "04_double_free", "05_null_return_deref", "06_null_deref",
-        "07_stack_use_after_return", "08_uninitialized_read", "09_strcpy_overflow",
-        "10_realloc_dangling", "11_global_overflow", "12_free_non_heap",
-        "13_linked_list_uaf", "14_integer_overflow_alloc", "15_dangling_in_struct",
-        "16_unused_cap_overflow", "17_ownership_uaf", "18_cleanup_double_free",
-        "19_realloc_shrink_overflow", "20_vector_stale_pointer"
-      ],
-      "default": "06_null_deref"
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-all",
+            "type": "shell",
+            "command": "make all",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "build-one",
+            "type": "shell",
+            "command": "gcc -std=c11 -g -O0 -fno-omit-frame-pointer challenges/${input:challenge}/bug.c -o build/${input:challenge}",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: gcc 활성 파일 빌드",
+            "command": "/usr/bin/gcc",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "디버거에서 생성된 작업입니다."
+        }
+    ],
+    "inputs": [
+        {
+            "id": "challenge",
+            "type": "pickString",
+            "description": "디버깅할 챌린지 선택",
+            "options": [
+                "01_use_after_free",
+                "02_stack_buffer_overflow",
+                "03_heap_buffer_overflow",
+                "04_double_free",
+                "05_null_return_deref",
+                "06_null_deref",
+                "07_stack_use_after_return",
+                "08_uninitialized_read",
+                "09_strcpy_overflow",
+                "10_realloc_dangling",
+                "11_global_overflow",
+                "12_free_non_heap",
+                "13_linked_list_uaf",
+                "14_integer_overflow_alloc",
+                "15_dangling_in_struct",
+                "16_unused_cap_overflow",
+                "17_ownership_uaf",
+                "18_cleanup_double_free",
+                "19_realloc_shrink_overflow",
+                "20_vector_stale_pointer"
+            ],
+            "default": "06_null_deref"
+        }
+    ]
 }
