@@ -137,7 +137,7 @@ static void screen_render(Screen *s) {
         Widget *w = s->items[i];
         if(w!=NULL && w->closed==1){ // items[i]의 위젯이가 NULL이 아니고 closed = 1이라면
             s->items[i] = NULL; // 지정해제해주기
-            free(w);
+            free(w); // 말록 해제
         }
         if(s->items[i]==NULL){ // NULL 이면 무시하고 건너뜀
             continue;
