@@ -35,11 +35,18 @@
  * TODO: realloc 은 반드시 "새 용량(newcap)" 으로 호출하고, l->cap 갱신과 순서를 맞춰야 한다.
  *       (성장 로직은 '용량 필드'와 '실제 확보량'이 항상 같도록 유지해야 한다)
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef struct {
     int   *data;
+    /*
+        data → int가 저장된 메모리를 가리키는 포인터
+        len  → 현재 저장된 int의 개수
+        cap  → 현재 최대 몇 개의 int를 저장할 수 있는지
+    */
+
     /* [Thinking Point]
      * 개수/크기를 담는 len, cap 을 왜 int 가 아니라 size_t 로 선언할까?
      *   tip 1. size_t 는 "이 플랫폼에서 표현 가능한 가장 큰 객체 크기"를 담도록 만든
@@ -48,10 +55,12 @@ typedef struct {
      *          원소가 그보다 많아지거나 cap*sizeof(int) 계산이 커지면 int 는 오버플로된다.
      *   생각해보기: 크기를 int 로 두면 어떤 버그가 생길 수 있을까?
      */
+    // size_t는 C에서 메모리 크기나 객체의 개수를 나타내기 위해 사용하는 부호없는 정수 자료형
     size_t len;
     size_t cap;
 } IntList;
 
+// IntList 메모리 할당
 static void list_init(IntList *l) {
     l->cap  = 8;
     l->len  = 0;
@@ -59,32 +68,37 @@ static void list_init(IntList *l) {
     if (!l->data) { perror("malloc"); exit(1); }
 }
 
+// 
 static void list_ensure(IntList *l, size_t need) {
     if (need <= l->cap) return;
 
-    size_t newcap = l->cap ? l->cap * 2 : 8;
-    while (newcap < need) newcap *= 2;
+    size_t newcap = l->cap ? l->cap * 2 : 8; // 현재 용량(cap)이 있으면 2배로 늘리고 없으면 8로 설정
+    while (newcap < need) newcap *= 2; // 필요한 양보다 적으면 계속 2배씩 늘림
 
-    int *p = realloc(l->data, l->cap * sizeof(int));
+    int *p = realloc(l->data, newcap * sizeof(int)); // l->cap * sizeof(int) 로 계속 쓰면 늘린 값으로 메모리 할당을 하는 것이 아니라 그래도 된값을 똑같이 넣는거라 메모리 공간이 안늘어남.
     if (!p) { perror("realloc"); free(l->data); exit(1); }
 
     l->data = p;
-    l->cap  = newcap;
+    l->cap = newcap; // 반영
 }
 
 static void list_push(IntList *l, int x) {
-    if (l->len == l->cap) list_ensure(l, l->cap + 1);
-    l->data[l->len++] = x;
+    if (l->len == l->cap){ // 공간 크기랑 길이랑 같으면
+        list_ensure(l, l->cap + 1); // 동적 리스트로 크기 늘리기
+    }
+    l->data[l->len++] = x; // 후위 증가 연산자 l->len위치에 x가 들어가고 len에 1이 증가됨.
 }
 
+// 리스트안 숫자 합
 static long long list_sum(const IntList *l) {
     long long s = 0;
     for (size_t i = 0; i < l->len; i++) s += l->data[i];
     return s;
 }
 
+// 할당 해제
 static void list_free(IntList *l) {
-    free(l->data);
+    free(l->data); 
     l->data = NULL;
     l->len = l->cap = 0;
 }
