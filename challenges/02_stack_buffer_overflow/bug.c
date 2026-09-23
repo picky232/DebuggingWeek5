@@ -53,7 +53,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ROWS 14
+#define ROWS 14 // 최대 14개
 enum { SIZE = ROWS * (ROWS + 1) / 2 };   /* 0..ROWS-1 행을 담는 정확한 크기 */
 
 /* 행 i, 열 j 의 삼각 인덱스 */
@@ -63,8 +63,8 @@ static int tri_index(int i, int j) {
 
 /* 파스칼의 삼각형을 tri[] 에 채운다. */
 static void build_pascal(int *tri, int rows) {
-    for (int i = 0; i <= rows; i++) {
-        for (int j = 0; j <= i; j++) {
+    for (int i = 0; i < rows; i++) { // 배열 크기가 14까지인데 i<=rows라고 하면 0~13까지의 범위를 벗어나서 스택카나리 영역을 건들임 고로 오류 발생 abort
+        for (int j = 0; j <= i; j++) { // 
             int idx = tri_index(i, j);
             if (j == 0 || j == i) {
                 tri[idx] = 1;                         /* 양 끝은 1 */
@@ -77,13 +77,13 @@ static void build_pascal(int *tri, int rows) {
     }
 }
 
-static long row_sum(const int *tri, int i) {
+static long row_sum(const int *tri, int i) { // 열의 합
     long sum = 0;
     for (int j = 0; j <= i; j++) sum += tri[tri_index(i, j)];
     return sum;
 }
 
-static void print_row(const int *tri, int i) {
+static void print_row(const int *tri, int i) { // 열 출력
     printf("row %2d:", i);
     for (int j = 0; j <= i; j++) printf(" %d", tri[tri_index(i, j)]);
     printf("   (sum=%ld)\n", row_sum(tri, i));

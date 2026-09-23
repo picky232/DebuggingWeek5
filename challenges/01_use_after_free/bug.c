@@ -74,7 +74,10 @@ static void dialog_render(Widget *self) { // 한번더 물어봄, id, label
     printf("  <<Dialog #%d>> %s\n", self->id, self->label);
 }
 
-static void widget_noop_event(Widget *self, int code) { (void)self; (void)code; } // 그냥 아무것도 안하는 코드
+static void widget_noop_event(Widget *self, int code) {
+    (void)self;
+    (void)code;
+} // 그냥 아무것도 안하는 코드
 
 /* 다이얼로그는 이벤트 코드 1(닫기)을 받으면 스스로 정리(파괴)된다 */
 static void dialog_on_event(Widget *self, int code);
@@ -149,7 +152,7 @@ static void screen_render(Screen *s) {
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
         self->closed = 1;
-        // widget_destroy(self); event에서는 free하지 않음 screen 쪽에서 closed=1인 위젯을 free하고 그 슬롯을 null로 바꿈
+        // widget_destroy(self); //event에서는 free하지 않음 screen 쪽에서 closed=1인 위젯을 free하고 그 슬롯을 null로 바꿈
     }
 }
 
