@@ -46,25 +46,27 @@
 typedef struct {
     int   id;
     char *name;      
-} Rec;
+} Rec; // 레코드 : id, 이름
 
 #define MAXN 16
 typedef struct {
-    Rec *by_id[MAXN];     
+    Rec *by_id[MAXN];
     Rec *by_name[MAXN];    
     int  count;
-} Directory;
+} Directory;  // Rec를 가리키는 포인터 배열(by_id, by_name)과 개수를 관리하는 구조체
 
+// 새로운 rec를 만드는 함수
 static Rec *rec_new(int id, const char *name) {
-    Rec *r = malloc(sizeof *r);
+    Rec *r = malloc(sizeof *r); // rec 구조체 바이트 크기만큼 메모리 크기를 할당해줌
     if (!r) { perror("malloc"); exit(1); }
     r->id = id;
-    r->name = malloc(strlen(name) + 1);
+    r->name = malloc(strlen(name) + 1); // 다른 힙 메모리 공간에 할당함 때문에 free시 각각 해줘야함
     if (!r->name) { perror("malloc"); exit(1); }
     strcpy(r->name, name);
     return r;
 }
 
+// 디렉토리에 새로운 rec를 넣는 함수
 static void directory_add(Directory *d, int id, const char *name) {
     Rec *r = rec_new(id, name);
     d->by_id[d->count]   = r;
@@ -76,7 +78,8 @@ static void directory_add(Directory *d, int id, const char *name) {
 static void directory_sort_by_name(Directory *d) {
     for (int i = 0; i < d->count; i++) {
         for (int j = i + 1; j < d->count; j++) {
-            if (strcmp(d->by_name[i]->name, d->by_name[j]->name) > 0) {
+            // strcmp 는 두 문자열을 비교하는 함수로 같으면 0 첫번째 문자열이 사전식으로 앞이면 음수, 반대면 양수값이 나옴
+            if (strcmp(d->by_name[i]->name, d->by_name[j]->name) > 0) { 
                 Rec *t = d->by_name[i];
                 d->by_name[i] = d->by_name[j];
                 d->by_name[j] = t;
@@ -85,12 +88,14 @@ static void directory_sort_by_name(Directory *d) {
     }
 }
 
+// id로 rec찾기
 static Rec *find_by_id(Directory *d, int id) {
     for (int i = 0; i < d->count; i++)
         if (d->by_id[i]->id == id) return d->by_id[i];
     return NULL;
 }
 
+// 출력
 static void directory_dump(Directory *d) {
     printf("by id:  ");
     for (int i = 0; i < d->count; i++) printf("%d:%s ", d->by_id[i]->id, d->by_id[i]->name);
@@ -99,14 +104,15 @@ static void directory_dump(Directory *d) {
     printf("\n");
 }
 
+// 메모리 할당 헤제
 static void directory_free(Directory *d) {
     for (int i = 0; i < d->count; i++) {
-        free(d->by_id[i]->name);
-        free(d->by_id[i]);                 
+        free(d->by_id[i]->name); // 문자열 힙 공간 free - 이거 안해주면 정상적인 방법으로 메모리의 주소를 못알아냄. 때문에 메모리 누수 발생함.
+        free(d->by_id[i]);       // 구조체 힙 공간 free
     }
-    for (int i = 0; i < d->count; i++) {
-        free(d->by_name[i]);               
-    }
+    // for (int i = 0; i < d->count; i++) {
+    //     free(d->by_name[i]);               
+    // }
     d->count = 0;
 }
 
