@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_KV 16
+#define MAX_KV 16 // 최대 크기 16
 typedef struct {
     const char *keys[MAX_KV];
     const char *vals[MAX_KV];
