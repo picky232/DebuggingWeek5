@@ -42,34 +42,47 @@ typedef struct {
     int n;
 } Config;
 
+// Config 구조체 세팅
 static void cfg_set(Config *c, const char *k, const char *v) {
-    if (c->n < MAX_KV) { c->keys[c->n] = k; c->vals[c->n] = v; c->n++; }
+    if (c->n < MAX_KV) {
+        c->keys[c->n] = k; 
+        c->vals[c->n] = v;
+        c->n++; // 배열 인덱스 증가
+    }
 }
 
+// Config 안 특정 값 가져오기
 static const char *cfg_get(const Config *c, const char *k) {
     for (int i = 0; i < c->n; i++)
-        if (strcmp(c->keys[i], k) == 0) return c->vals[i];
+        if (strcmp(c->keys[i], k) == 0) // c->keys[i]와 k가 같으면 0
+            return c->vals[i];
     return NULL;                       /* 없는 키 → NULL */
 }
 
 static void expand(const Config *c, const char *tmpl, char *out, size_t outcap) {
     size_t o = 0;
-    for (const char *p = tmpl; *p; ) {
+    for (const char *p = tmpl; *p; ) { // 문자열 배열을 포인터로 잡고 +1씩 하며 각 문자들 순회
         if (p[0] == '$' && p[1] == '{') {
-            const char *end = strchr(p, '}');
+            const char *end = strchr(p, '}'); // p가 가리키는 문자열에서 }를 찾아서 그 주소를 반환해라
             if (!end) break;
             char key[32];
-            size_t kl = (size_t)(end - (p + 2));
-            if (kl >= sizeof key) kl = sizeof key - 1;
-            memcpy(key, p + 2, kl);
-            key[kl] = '\0';
+            size_t kl = (size_t)(end - (p + 2)); // ${} 사이에 문자열 길이를 구하는 식
+            if (kl >= sizeof key) kl = sizeof key - 1; // 31바이트보다 긴 문자열의 경우에는 잘라냄
+            memcpy(key, p + 2, kl); // memcpy(dest, src, n) src주소부터 n바이트를 읽어서 dest주소에 n바이트를 복사
+            key[kl] = '\0'; // 널 문자 (문자열이 여기서 끝남)
 
-            const char *v = cfg_get(c, key);      
-            size_t vl = strlen(v);                 
-            if (o + vl < outcap) { memcpy(out + o, v, vl); o += vl; }
-            p = end + 1;
+            const char *v = cfg_get(c, key); // 키값이 있으면 키와 같은 인덱스를 가진val 반환, 없으면 NULL 반환
+            if(!v){ // 사용전 빈값으로 반환
+                v = "";
+            }
+            fprintf(stderr, "expand key=%s v=%p\n", key, (void*)v);
+            size_t vl = strlen(v); // 반환한 문자열 길이
+            if (o + vl < outcap) { memcpy(out + o, v, vl); o += vl; } 
+            // out배열에 + o크기를 더한 인덱스 위치의 포인터에 v문자를 vl바이트 만큼 추가, 바이트 크기만큼 더하기(복사해서 넣엇으니까)
+            p = end + 1;// 갱신
         } else {
-            if (o + 1 < outcap) out[o++] = *p;
+            // out 배열에 포인터 p메모리 안 데이터 넣고 p++
+            if (o + 1 < outcap) out[o++] = *p; 
             p++;
         }
     }
