@@ -46,10 +46,14 @@ static char *skip_ws(char *s) {
 }
 
 static void parse_headers(char *text, Headers *h) {
+    // strtok 는 문자열 배열을 특정 문자열 기준으로 잘라서 앞에 있는 문자를 반환해주는 함수 
+    // strtok(NULL, "기준") 이렇게 쓰면 자르던 문자열에서 이어서 다음 토큰을 찾아라
     for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) {
         char *colon = strchr(line, ':');   
-
-        *colon = '\0';                    
+        if (colon == NULL) {
+            continue;
+        }
+        *colon = '\0';
         char *key = line;
         char *val = skip_ws(colon + 1);
 
