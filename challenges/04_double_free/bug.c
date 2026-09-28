@@ -108,7 +108,10 @@ static void directory_dump(Directory *d) {
 static void directory_free(Directory *d) {
     for (int i = 0; i < d->count; i++) {
         free(d->by_id[i]->name); // 문자열 힙 공간 free - 이거 안해주면 정상적인 방법으로 메모리의 주소를 못알아냄. 때문에 메모리 누수 발생함.
+        d->by_id[i]->name = NULL;
         free(d->by_id[i]);       // 구조체 힙 공간 free
+        d->by_id[i] = NULL;
+        d->by_name[i] = NULL;
     }
     // for (int i = 0; i < d->count; i++) {
     //     free(d->by_name[i]);               
