@@ -52,16 +52,24 @@ static void view_set(LineView *out, char **arr, int n) {
     out->count = n;
 }
 
-static void split_lines(LineView *out, char *text) {
-    char *parts[MAX_LINES];              
+static void split_lines(LineView *out, char *text, char **parts) {
+    // 말록 할당
+    // char **parts = malloc(sizeof(char *) * MAX_LINES); // 힙에 메모리 할당함.
+
+    // if(parts == NULL){
+    //     out->lines = NULL;
+    //     out->count = 0;
+    //     return;
+    // }
+
     int n = 0;
     /* strtok는 새로 할당하지 않고, 넘겨받은 문자열 내부의 주소를 돌려준다. 
     * 따라서, strtok은 원본 버퍼를 제자리에서 수정한다. 
     */
     for (char *ln = strtok(text, "\n"); ln && n < MAX_LINES; ln = strtok(NULL, "\n"))
-        parts[n++] = ln;
+        parts[n++] = ln; // part에 나눈 문자열 넣기
 
-    view_set(out, parts, n);      
+    view_set(out, parts, n); 
 
     /* TODO 상기 코드를 수정하여 결과를 호출자가 준 out 에 직접 채운다(값 반환 아님, 지역 주소 반환 아님). */       
 }
@@ -79,7 +87,8 @@ int main(void) {
     char text[] = "alpha\nbeta\ngamma";
 
     LineView v;
-    split_lines(&v, text);               
+    char *storage[MAX_LINES];
+    split_lines(&v, text, &storage);
     warm_stack();                        
 
     long checksum = 0;
@@ -87,5 +96,6 @@ int main(void) {
         checksum += (unsigned char)v.lines[i][0];
 
     printf("lines = %d, checksum = %ld\n", v.count, checksum);
+    // free(v.lines);
     return 0;
 }
