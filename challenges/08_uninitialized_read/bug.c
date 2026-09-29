@@ -73,7 +73,9 @@ static void dirty_heap(void) {
 
 static int **make_matrix(void) {
 
-    int **rows = malloc(ROWS * sizeof(int *));
+    // malloc에서 calloc으로 변경한 이유는 malloc은 힙메모리를 할당만 해주는 것이여서 쓰레기값이 그대로 남아있지만 calloc은 할당한 메모리를 0으로 초기화 해주기 때문에 calloc을 사용함
+    // calloc을 사용하는 방법은 calloc(원소 개수, 원소 하나의 크기) 로 지정해서 선언해주면 됨.
+    int **rows = calloc(ROWS, sizeof(int *)); // int * 포인터들을 가리킬 포인터여서
     if (!rows) { perror("malloc"); exit(1); }
 
     for (int i = 0; i < ROWS; i += 2) {
@@ -88,7 +90,9 @@ static long row_sum(int **rows, int nrows) {
     long total = 0;
     for (int i = 0; i < nrows; i++) {
         for (int j = 0; j < COLS; j++) {
-            total += rows[i][j];      
+            if(!rows[i]) continue;
+            fprintf(stderr, "rows[%d]=%p\n", i, (void*)rows[i]);
+            total += rows[i][j];
         }
     }
     return total;
