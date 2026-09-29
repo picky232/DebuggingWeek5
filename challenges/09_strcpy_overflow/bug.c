@@ -38,13 +38,14 @@
 /* 필요한 총 바이트 수 = 모든 조각 길이 합 + 종료 문자 1 */
 static size_t joined_size(const char *const *parts, int n) {
     size_t total = 1;                        /* '\0' 자리 */
-    for (int i = 0; i < n - 1; i++) {        
+    for (int i = 0; i < n; i++) { // n-1까지 반복하던 코드를 수정하여 해결함   
         total += strlen(parts[i]);
     }
+    // printf("total:%d\n", total);
     return total;
 }
 
-static char *join(const char *const *parts, int n) {
+static char *join(const char *const *parts, int n) { // 문자열의 문자를 수정 X, 문자열의 포인터 자체도 바꾸기 X
     size_t need = joined_size(parts, n);
     char *out = malloc(need);                /* 마지막 조각 길이만큼 부족하게 할당됨 */
     if (!out) { perror("malloc"); exit(1); }
@@ -62,10 +63,12 @@ int main(void) {
     
     static char body[200000];
     memset(body, 'x', sizeof body - 1);
+    // fprintf(stdout, "body = %p, %p\n", *body, body);
     body[sizeof body - 1] = '\0';
 
     const char *parts[] = { "GET ", "/index.html", " HTTP/1.1\r\n\r\n", body };
     int n = (int)(sizeof(parts) / sizeof(parts[0]));
+    // printf("n = %d\nsizeof parts = %d\nsizeof parts[0] = %d\n", n, (int)(sizeof parts), (int)(sizeof parts[0]));
 
     char *msg = join(parts, n);              /* 복사 중 힙 오버플로 → 크래시 */
 
