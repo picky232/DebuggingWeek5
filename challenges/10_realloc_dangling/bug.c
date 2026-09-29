@@ -42,12 +42,13 @@
 #define MAX_UNDO 8
 typedef struct {
     int   *data;
-    size_t len, cap;
-    int   *clipboard;       
-    int   *undo[MAX_UNDO];   
-    int    undo_n;
+    size_t len, cap; // 메모리크기, 객체의 크기, 개수 등을 표현하기 위해 만들어진 부호 없는 정수 타입
+    int   *clipboard; // 
+    int   *undo[MAX_UNDO]; // 스냅샷 저장
+    int    undo_n; // undo 개수 
 } EditBuffer;
 
+// 최초 정의 EditBuffer를 힙 메모리에 할당 + 최초값 정의함
 static void eb_init(EditBuffer *e) {
     e->cap = 4;
     e->len = 0;
@@ -56,33 +57,41 @@ static void eb_init(EditBuffer *e) {
     if (!e->data) { perror("malloc"); exit(1); }
     /* data 바로 뒤에 놓이는 별도 할당. data 가 힙 맨 끝(top)이 아니게 되어
        이후 realloc 이 제자리 확장 대신 '이동'을 택하게 만든다(→ 옛 블록 해제). */
-    e->clipboard = malloc(e->cap * sizeof(int));
+    e->clipboard = malloc(e->cap * sizeof(int)); // 따로 realloc전에 원본 저장
     if (!e->clipboard) { perror("malloc"); exit(1); }
 }
 
 static void eb_snapshot(EditBuffer *e) {
-    if (e->undo_n < MAX_UNDO) e->undo[e->undo_n++] = e->data;
+    int *new = malloc(e->cap * sizeof(int));
+    for(int i=0; i<e->len; i++){
+        new[i] = e->data[i];
+    }
+    if (e->undo_n < MAX_UNDO){
+        e->undo[e->undo_n++] = new; // 현재 버전 기억 (스냅샷)
+    }
+    // e->undo배열에 undo_n(idx)위치에 현재 malloc한 힙 메모리 크기 원본 데이터 저장
 }
 
 static void eb_grow(EditBuffer *e, size_t need) {
-    size_t nc = e->cap;
+    size_t nc = e->cap; 
     while (nc < need) nc *= 2;
-    int *p = realloc(e->data, nc * sizeof(int));   
+    int *p = realloc(e->data, nc * sizeof(int)); // realloc으로 힙 공간 크기 늘림 2배
     if (!p) { perror("realloc"); free(e->data); exit(1); }
-    e->data = p;                                   
-    e->cap = nc;
+    e->data = p; // 늘린 공간으로 변경
+    e->cap = nc; // 늘린 크기로 변경
 }
 
 static void eb_push(EditBuffer *e, int v) {
-    if (e->len == e->cap) eb_grow(e, e->len + 1);
+    if (e->len == e->cap) eb_grow(e, e->len + 1); // len이 cap(크기)와 같으면 힙공간 크기 키움 eb_grow()
     e->data[e->len++] = v;
 }
 
 static void eb_free(EditBuffer *e) {
     free(e->data);
     free(e->clipboard);
+    // undo에는 복사본이 아닌 e->data라는 realloc된 이미 free된 포인터가 지정되어있음
     for (int i = 0; i < e->undo_n; i++) {
-        free(e->undo[i]);           
+        free(e->undo[i]);
     }
     e->undo_n = 0;
     e->data = NULL;
