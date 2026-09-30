@@ -48,7 +48,7 @@
  *   생각해보기: 여러 번 호출돼도 같은 저장소를 계속 나눠 쓰려면(커서 arena_off 유지)
  *               이 버퍼는 왜 전역(또는 static)이어야 할까? */
 static unsigned char arena[ARENA_SIZE];    /* 전역(.bss) 아레나 */
-static size_t arena_off = 0;
+static size_t arena_off = 0; 
 
 static void *arena_alloc(size_t n) {
     void *p = &arena[arena_off];
@@ -68,7 +68,7 @@ int main(void) {
     const char *words[] = {
         "insert", "delete", "search", "traverse", "balance",
         "rotate", "rehash", "compact", "serialize", "checkpoint",
-    };
+    }; // 넣을 워드들
     int nwords = (int)(sizeof(words) / sizeof(words[0]));
 
     char *last = NULL;
