@@ -52,12 +52,14 @@ static size_t arena_off = 0;
 
 static void *arena_alloc(size_t n) {
     void *p = &arena[arena_off];
-    arena_off += n;
+    if(arena_off+n <= sizeof(arena)) arena_off += n;
+    else return NULL;
     return p;
 }
 
 static char *intern(const char *s) {
     size_t n = strlen(s) + 1;
+    printf("n = %d, s = %s\n", n, s);
     char *dst = arena_alloc(n);
     memcpy(dst, s, n);                      /* 경계를 넘은 위치면 여기서 크래시 */
     return dst;
@@ -65,17 +67,17 @@ static char *intern(const char *s) {
 
 int main(void) {
     
-    const char *words[] = {
+    const char *words[] = { // 문자열 포인터 배열
         "insert", "delete", "search", "traverse", "balance",
         "rotate", "rehash", "compact", "serialize", "checkpoint",
     }; // 넣을 워드들
     int nwords = (int)(sizeof(words) / sizeof(words[0]));
-
+    // printf("words size = %d\nwords[0] size = %d", sizeof(words), sizeof(words[0]));
     char *last = NULL;
     long total = 0;
     for (int i = 0; i < 100000; i++) {
         char buf[32];
-        snprintf(buf, sizeof buf, "%s-%d", words[i % nwords], i);
+        snprintf(buf, sizeof buf, "%s-%d", words[i % nwords], i); // 문자열과 정수 i를 합쳐서 buf에 문자열로 저장하는 코드
         last = intern(buf);                 
         total += (long)strlen(last);
     }
